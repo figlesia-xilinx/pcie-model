@@ -442,14 +442,6 @@ void PCIeController::handle_MemRd(unsigned int bar_num, uint64_t addr,
 	trans.set_data_length(len);
 	trans.set_streaming_width(len);
 
-	//
-	// One outstanding DMA transaction is supported at the moment
-	//
-	while (m_dma_ongoing) {
-		wait(m_dma_done_event);
-	}
-	m_dma_ongoing = true;
-
 	switch (bar_num) {
 	case 0:
 		bar0_init_socket->b_transport(trans, delay);
