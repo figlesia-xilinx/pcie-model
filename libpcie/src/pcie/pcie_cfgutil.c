@@ -329,7 +329,8 @@ bool pcie_cfgspc_verify_write_access(uint32_t *write_mask,
                                      unsigned int bits,
                                      bool is_vf,
                                      bool from_mc,
-                                     void *val)
+                                     void *val,
+                                     uint8_t *config_space)
 {
   bool ret = false;
 
@@ -341,24 +342,30 @@ bool pcie_cfgspc_verify_write_access(uint32_t *write_mask,
     case 32:
     {
       uint32_t wmask = write_mask[addr/4];
+      uint32_t cur_v = ((uint32_t*) config_space)[addr/4];
       uint32_t *v = (uint32_t *) val;
       v[0] &= wmask;
+      v[0] |= cur_v & (~wmask);
       ret = wmask != 0;
       break;
     }
     case 16:
     {
       uint16_t wmask = ((uint16_t*) write_mask)[addr/2];
+      uint16_t cur_v = ((uint16_t*) config_space)[addr/2];
       uint16_t *v = (uint16_t *) val;
       v[0] &= wmask;
+      v[0] |= cur_v & (~wmask);
       ret = wmask != 0;
       break;
     }
     case 8:
     {
       uint8_t wmask = ((uint8_t*) write_mask)[addr];
+      uint8_t cur_v = ((uint8_t*) config_space)[addr];
       uint8_t *v = (uint8_t *) val;
       v[0] &= wmask;
+      v[0] |= cur_v & (~wmask);
       ret = wmask != 0;
       break;
     }

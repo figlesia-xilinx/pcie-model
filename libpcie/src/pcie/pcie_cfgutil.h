@@ -115,7 +115,8 @@ bool pcie_cfgspc_verify_write_access(uint32_t *write_mask,
                                      unsigned int bits,
                                      bool is_vf,
                                      bool from_mc,
-                                     void *val);
+                                     void *val,
+                                     uint8_t *config_space);
 
 void pcie_cfgspc_fill_ari_next(uint8_t *config_space, uint8_t next_devfn);
 #endif
