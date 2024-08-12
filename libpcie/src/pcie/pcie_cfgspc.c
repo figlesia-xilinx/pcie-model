@@ -1384,7 +1384,8 @@ static void handle_cfg_write_8(pcie_state_t *state, fs_pci_core_resource_t *reso
 
   is_vf = (resource->vf != VF_NONE);
   from_mc = (type != CFG_ACCESS_HOST);
-  write_ok = pcie_cfgspc_verify_write_access(resource->write_mask, addr, 8, is_vf, from_mc);
+  write_ok = pcie_cfgspc_verify_write_access(resource->write_mask, addr, 8, is_vf, from_mc,
+                                             (void*) &val);
   if (!write_ok) {
     fs_log("Warning: config write to 0x%03x rejected\n", addr);
     return;
@@ -1428,7 +1429,7 @@ static void handle_cfg_write_16(pcie_state_t *state, fs_pci_core_resource_t *res
   is_vf = (resource->vf != VF_NONE);
   from_mc = (type != CFG_ACCESS_HOST);
   write_ok = pcie_cfgspc_verify_write_access(resource->write_mask, addr, 16,
-                                             is_vf, from_mc);
+                                             is_vf, from_mc, (void*) &val);
   if (!write_ok && !misc_vpd_workaround(state, addr, is_vf)) {
     fs_log("Warning: config write to 0x%03x rejected\n", addr);
     return;
@@ -1728,7 +1729,7 @@ static void handle_cfg_write_32(pcie_state_t *state, fs_pci_core_resource_t *res
   is_vf = (resource->vf != VF_NONE);
   from_mc = (type != CFG_ACCESS_HOST);
   write_ok = pcie_cfgspc_verify_write_access(resource->write_mask, addr, 32,
-                                             is_vf, from_mc);
+                                             is_vf, from_mc, (void*) &val);
   if (!write_ok && !misc_vpd_workaround(state, addr, is_vf)) {
     fs_log("Warning: config write to 0x%03x rejected\n", addr);
     return;

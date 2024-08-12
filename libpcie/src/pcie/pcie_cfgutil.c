@@ -46,9 +46,9 @@
 
 static uint32_t default_write_mask[PCI_CFG_SPACE_EXP_SIZE/sizeof(uint32_t)] = {
   /*DEV/VEND  CMD/STAT    CLS/REV     Stuff        BAR0       BAR1        BAR2        BAR3 */
-  0x00000000, 0xffffffff, 0x00000000, 0x00000000, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
+  0x00000000, 0xf9000547, 0x00000000, 0x00000000, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
   /* BAR4      BAR5       Cardbus     SubsysID     Exprom     Caps ptr    Rsvd        int pin/line */
-  0xffffffff, 0xffffffff, 0x00000000, 0x00000000, 0xffffffff, 0x00000000, 0x00000000, 0x000000ff,
+  0xffffffff, 0xffffffff, 0x00000000, 0x00000000, 0xffffffff, 0x00000000, 0x00000000, 0x00000000,
 };
 
 static const uint32_t sriov_mask[] = {
@@ -60,26 +60,26 @@ static const uint32_t sriov_mask[] = {
 
 static const uint16_t msix_mask[] = {
   /* Cap hdr   msix control reg */
-  0x0000,      0xffff,
+  0x0000,      0xc000,
 };
 
 static const uint32_t pcie_mask[] = {
   /* Cap       dev_cap    dev_ctl */
-  0x00000000, 0x00000000, 0xffffffff,
+  0x00000000, 0x00000000, 0x004fffff,
   /* Link Capabilities */
   0x00000000,
   /* Link control / Link status */
-  0x0000FFFF,
+  0xc000FFFF,
 };
 
 static const uint32_t acs_mask[] = {
   /* Cap hdr  cap/ctrl    egress control*/
-  0x00000000, 0x00ff0000, 0xffffffff
+  0x00000000, 0x1fff0000, 0xffffffff
 };
 
 static const uint32_t pm_mask[] = {
   /* Cap      PM ctrl/stat */
-  0x00000000, 0x0000ffff,
+  0x00000000, 0x00009f03,
 };
 
 uint8_t pcie_find_cap(unsigned cap, const uint8_t *cfgspc)
@@ -328,27 +328,45 @@ bool pcie_cfgspc_verify_write_access(uint32_t *write_mask,
                                      unsigned int addr,
                                      unsigned int bits,
                                      bool is_vf,
-                                     bool from_mc)
+                                     bool from_mc,
+                                     void *val)
 {
+  bool ret = false;
+
   if (addr >= PCI_CFG_SPACE_EXP_SIZE)
     return false;
   if (from_mc)
     return true;
   switch(bits) {
     case 32:
-      return write_mask[addr/4] == 0xffffffff;
+    {
+      uint32_t wmask = write_mask[addr/4];
+      uint32_t *v = (uint32_t *) val;
+      v[0] &= wmask;
+      ret = wmask != 0;
       break;
+    }
     case 16:
-      return ((uint16_t *)write_mask)[addr/2] == 0xffff;
+    {
+      uint16_t wmask = ((uint16_t*) write_mask)[addr/2];
+      uint16_t *v = (uint16_t *) val;
+      v[0] &= wmask;
+      ret = wmask != 0;
       break;
+    }
     case 8:
-      return ((uint8_t *)write_mask)[addr] == 0xff;
+    {
+      uint8_t wmask = ((uint8_t*) write_mask)[addr];
+      uint8_t *v = (uint8_t *) val;
+      v[0] &= wmask;
+      ret = wmask != 0;
       break;
+    }
     default:
       assert(0);
       break;
   }
-  return false;
+  return ret;
 }
 
 static void ari_fixer(uint8_t *cfgspc, uint16_t offset, void *context)
